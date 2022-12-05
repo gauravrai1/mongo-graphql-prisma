@@ -12,6 +12,7 @@ model User {
   email     String    @unique
   firstName String?
   lastName  String?
+  password  String
   posts     Post[]    @relation("postAuthor")
   comments  Comment[] @relation("commentAuthor")
 }

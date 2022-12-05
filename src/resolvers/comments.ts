@@ -47,7 +47,7 @@ export const commentsResolvers = {
               })
               return comment
         } else {
-          const comment =  context.prisma.comment.create({
+          const comment = context.prisma.comment.create({
                 data: {
                   content: args.data.content,
                   post: {

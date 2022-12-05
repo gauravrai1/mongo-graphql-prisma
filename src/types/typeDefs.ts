@@ -1,7 +1,8 @@
 export const typeDefs = `#graphql
 
   type Mutation {
-    signupUser(data: UserCreateInput!): User!
+    signupUser(registerInput: RegisterInput): User!
+    login(email: String!, password: String!): User!
     updateFirstName(data: UserUpdateFirstNameInput!): User!
     updateLastName(data: UserUpdateLastNameInput!): User!
     createDraft(data: PostCreateInput!): Post
@@ -86,25 +87,26 @@ export const typeDefs = `#graphql
   type User {
     email: String!
     id: Int!
+    token: String!
     firstName: String
     lastName: String
     posts: [Post!]
     comments: [Comment!]
   }
 
-  input UserCreateInput {
+  input RegisterInput {
     firstName: String
     lastName: String
+    password: String!
+    confirmPassword: String!
     email: String!
   }
 
   input UserUpdateFirstNameInput {
-    userId: Int!
     firstName: String!
   }
 
   input UserUpdateLastNameInput {
-    userId: Int!
     lastName: String!
   }
 

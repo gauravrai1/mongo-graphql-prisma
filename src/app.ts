@@ -14,6 +14,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
 const PORT = process.env.PORT || 4000
 
 const app = express()
+app.use(express.json())
 const httpServer = createServer(app)
 
 async function start() {
@@ -27,14 +28,14 @@ async function start() {
   const serverCleanup = useServer(
     {
       schema,
-      context,
+      context: context,
     },
     wsServer,
   )
 
   const server = new ApolloServer({
     schema,
-    context,
+    context: ({ req }) => ({req, ...context}),
     plugins: [
       ApolloServerPluginDrainHttpServer({ httpServer }),
       {

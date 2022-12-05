@@ -1,6 +1,4 @@
-import { gql } from 'apollo-server'
-
-export const typeDefs = gql`
+export const typeDefs = `#graphql
 
   type Mutation {
     signupUser(data: UserCreateInput!): User!
@@ -108,6 +106,10 @@ export const typeDefs = gql`
   input UserUpdateLastNameInput {
     userId: Int!
     lastName: String!
+  }
+
+  type Subscription {
+    newComment: Comment!
   }
 
   scalar DateTime

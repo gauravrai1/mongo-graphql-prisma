@@ -31,7 +31,7 @@ export const commentsResolvers = {
         context: Context,
       ) => {
         if (args.data.replyTo) {
-            return context.prisma.comment.create({
+            const comment = context.prisma.comment.create({
                 data: {
                   content: args.data.content,
                   post: {
@@ -45,8 +45,9 @@ export const commentsResolvers = {
                   },
                 },
               })
+              return comment
         } else {
-            return context.prisma.comment.create({
+          const comment =  context.prisma.comment.create({
                 data: {
                   content: args.data.content,
                   post: {
@@ -57,6 +58,12 @@ export const commentsResolvers = {
                   }
                 },
               })
+
+            context.pubsub.publish('NEW_COMMENT', {
+                newComment: comment
+            });
+
+          return comment
         }
       },
       deleteComment: (_parent, args: { id: number }, context: Context) => {
@@ -73,6 +80,11 @@ export const commentsResolvers = {
               content: args.data.content,
             },
           })
+      }
+    },
+    Subscription: {
+      newComment: {
+        subscribe: (_, __, { pubsub }) => pubsub.asyncIterator('NEW_COMMENT')
       }
     },
     Comment: {

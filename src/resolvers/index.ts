@@ -23,5 +23,8 @@ export const resolvers = {
     ...postsResolvers.Mutation,
     ...commentsResolvers.Mutation
   },
+  Subscription: {
+    ...commentsResolvers.Subscription,
+  },
   DateTime: DateTimeResolver,
 };

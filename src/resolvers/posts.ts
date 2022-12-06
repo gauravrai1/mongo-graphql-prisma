@@ -1,28 +1,56 @@
 import { Context } from '../context'
+import { checkAuth } from '../utils/auth-check'
+const { UserInputError } = require('apollo-server');
 
 export const postsResolvers = {
     Query: {
-      postsByUser: (
+      postsByUser: async (
         _parent,
         args: { userId: number },
         context: Context,
       ) => {
-        return context.prisma.user
-          .findUnique({
+
+        // Checking if user is authenticated
+        checkAuth(context);
+
+        // Fetching user by id to check if user exists
+        const queriedUser = await context.prisma.user.findUnique({
             where: {
-              id: args.userId},
-          })
-          .posts({
-            where: {
-              published: true,
-            },
-          })
+                id: args.userId || undefined
+            }
+        })
+
+        // Checking if user exists
+        if (queriedUser) {
+
+            // Returning posts by user id
+            return context.prisma.user
+            .findUnique({
+                where: {
+                id: args.userId},
+            })
+            .posts({
+                where: {
+                published: true,
+                },
+            })
+
+        } else {
+
+            // Throwing error if user does not exist
+            throw new UserInputError('User not found')
+        }
       },
       draftsByUser: (
         _parent,
         args: { userId: number },
         context: Context,
       ) => {
+
+        // Checking if user is authenticated
+        checkAuth(context);
+
+        // Returning drafts by user id
         return context.prisma.user
           .findUnique({
             where: {
@@ -35,10 +63,22 @@ export const postsResolvers = {
             },
           })
       },
-      postById: (_parent, args: { id: number }, context: Context) => {
-        return context.prisma.post.findUnique({
+      postById: async (_parent, args: { id: number }, context: Context) => {
+
+        // Checking if user is authenticated
+        checkAuth(context);
+
+        // Returning post by id
+        const post = await context.prisma.post.findUnique({
           where: { id: args.id || undefined },
         })
+
+        // Checking if post exists
+        if (post) {
+            return post
+        } else {
+            throw new UserInputError('Post not found')
+        }
       },
       feed: (
         _parent,
@@ -50,6 +90,11 @@ export const postsResolvers = {
         },
         context: Context,
       ) => {
+
+        // Checking if user is authenticated
+        checkAuth(context);
+
+        // Generating clauseable object
         const or = args.searchString
           ? {
               OR: [
@@ -58,6 +103,7 @@ export const postsResolvers = {
             }
           : {}
   
+        // Returning posts by user id and search string if provided 
         return context.prisma.post.findMany({
           where: {
             published: true,
@@ -72,18 +118,29 @@ export const postsResolvers = {
     Mutation: {
       createDraft: (
         _parent,
-        args: { data: PostCreateInput},
+        args: { content: string, published?: boolean },
         context: Context,
       ) => {
+
+        // Validating user input
+        if (args.content.trim() === '') {
+            throw new UserInputError('Content cannot be empty')
+        }
+
+        // Checking if user is authenticated
+        const user = checkAuth(context);
+
+        // Creating draft
         return context.prisma.post.create({
           data: {
-            content: args.data.content,
+            content: args.content,
             author: {
-              connect: { id: args.data.userId },
+              connect: { id: user.id },
             },
-            published: args.data.published || false,
+            published: args.published || false,
           },
         })
+
       },
       togglePublishPost: async (
         _parent,
@@ -91,29 +148,93 @@ export const postsResolvers = {
         context: Context,
       ) => {
         try {
-          const post = await context.prisma.post.findUnique({
-            where: { id: args.id || undefined },
-            select: {
-              published: true,
-            },
-          })
-  
-          return context.prisma.post.update({
-            where: { id: args.id || undefined },
-            data: { published: !post?.published },
-          })
+
+            // Checking if user is authenticated
+            const user = checkAuth(context);
+
+            // Fetching post by id
+            const post = await context.prisma.post.findUnique({
+                where: {   
+                    id: args.id || undefined
+                }
+            })
+
+            // Checking if post exists
+            if (!post) {
+                throw new UserInputError('Post not found')
+            }
+
+            // Checking if user is the author of the post
+            if (post.authorId !== user.id) {
+                throw new UserInputError('Action not allowed')
+            }
+            
+            // publishing status to toggle true
+            await context.prisma.post.findUnique({
+                where: { id: args.id || undefined },
+                select: {
+                    published: true,
+                },
+            })
+    
+            // Updating post published status
+            return context.prisma.post.update({
+                where: { id: args.id || undefined },
+                data: { published: !post?.published },
+            })
+
         } catch (error) {
-          throw new Error(
+          throw new UserInputError(
             `Post with ID ${args.id} does not exist in the database.`,
           )
         }
       },
-      deletePost: (_parent, args: { id: number }, context: Context) => {
+      deletePost: async (_parent, args: { id: number }, context: Context) => {
+
+        // Checking if user is authenticated
+        const user = checkAuth(context);
+
+        // fetching post by id
+        const post = await context.prisma.post.findUnique({
+            where: { id: args.id || undefined },
+        })
+
+        // Checking if post exists
+        if (!post) {
+            throw new UserInputError('Post not found')
+        }
+
+        // Checking if user is the author of the post
+        if (post.authorId !== user.id) {
+            throw new UserInputError('Action not allowed')
+        }
+
+        // Deleting post
         return context.prisma.post.delete({
           where: { id: args.id },
         })
       },
-      updatePost: (_parent, args: { data: PostUpdateInput }, context: Context) => {
+      updatePost: async (_parent, args: { data: PostUpdateInput }, context: Context) => {
+
+        // Checking if user is authenticated
+        const user = checkAuth(context);
+
+        // Fetching post by id
+        const post = await context.prisma.post.findUnique({
+            where: { id: args.data.postId || undefined },
+        })
+
+        // Checking if post exists
+        if (!post) {
+            throw new UserInputError('Post not found')
+        }
+
+        // Checking if user is the author of the post
+        if (post.authorId !== user.id) {
+            throw new UserInputError('Action not allowed')
+        }
+
+        // Updating post content
         return context.prisma.post.update({
           where: { id: args.data.postId },
           data: {
@@ -152,10 +273,4 @@ export const postsResolvers = {
   interface PostUpdateInput {
     postId: number
     content: string
-  }
-  
-  interface PostCreateInput {
-    content: string
-    published?: boolean
-    userId: number
   }

@@ -6,6 +6,7 @@ import { WebSocketServer } from 'ws'
 import { ApolloServer } from 'apollo-server-express'
 import { makeExecutableSchema } from '@graphql-tools/schema'
 const express = require('express')
+const bodyParser = require('body-parser');
 import { useServer } from 'graphql-ws/lib/use/ws'
 import { context } from './context'
 
@@ -14,7 +15,7 @@ const schema = makeExecutableSchema({ typeDefs, resolvers })
 const PORT = process.env.PORT || 4000
 
 const app = express()
-app.use(express.json())
+
 const httpServer = createServer(app)
 
 async function start() {

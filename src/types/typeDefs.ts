@@ -1,11 +1,11 @@
 export const typeDefs = `#graphql
 
   type Mutation {
-    signupUser(registerInput: RegisterInput): User!
+    signupUser(data: RegisterInput): User!
     login(email: String!, password: String!): User!
     updateFirstName(data: UserUpdateFirstNameInput!): User!
     updateLastName(data: UserUpdateLastNameInput!): User!
-    createDraft(data: PostCreateInput!): Post
+    createDraft(content: String!, published: Boolean): Post
     togglePublishPost(id: Int!): Post
     deletePost(id: Int!): Post
     updatePost(data: PostUpdateInput!): Post
@@ -33,7 +33,6 @@ export const typeDefs = `#graphql
   input CommentCreateInput {
     content: String!
     postId: Int!
-    authorId: Int!
     replyTo: Int
   }
 
@@ -45,12 +44,6 @@ export const typeDefs = `#graphql
     published: Boolean!
     updatedAt: DateTime!
     comments: [Comment!]
-  }
-
-  input PostCreateInput {
-    content: String
-    published: Boolean
-    authorId: Int!
   }
 
   input PostUpdateInput {

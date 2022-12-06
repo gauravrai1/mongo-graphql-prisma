@@ -127,6 +127,7 @@ export const commentsResolvers = {
         } else {
 
           // Creating comment
+          console.log(args.data.postId)
           const comment = await context.prisma.comment.create({
                 data: {
                   content: args.data.content,
@@ -228,7 +229,20 @@ export const commentsResolvers = {
                 })
                 .replies()
             },
-        
+        post: (parent, _args, context: Context) => {
+          return context.prisma.comment
+            .findUnique({
+              where: { id: parent?.id },
+            })
+            .post()
+        },
+        author: (parent, _args, context: Context) => {
+          return context.prisma.comment
+            .findUnique({
+              where: { id: parent?.id },
+            })
+            .author()
+        },
     }
   }
   

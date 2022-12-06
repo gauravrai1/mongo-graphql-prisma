@@ -102,7 +102,7 @@ export const commentsResolvers = {
           }
 
           // Creating comment with replyToId
-          const comment = context.prisma.comment.create({
+          const comment = await context.prisma.comment.create({
             data: {
               content: args.data.content,
               post: {
@@ -118,16 +118,16 @@ export const commentsResolvers = {
           })
 
           // Pushing new comment event
-          context.pubsub.publish('NEW_COMMENT', {
+          await context.pubsub.publish('NEW_COMMENT', {
             newComment: comment
-        });
+          });
 
         return comment
 
         } else {
 
           // Creating comment
-          const comment = context.prisma.comment.create({
+          const comment = await context.prisma.comment.create({
                 data: {
                   content: args.data.content,
                   post: {
@@ -140,7 +140,7 @@ export const commentsResolvers = {
           })
 
           // publishing new comment event
-          context.pubsub.publish('NEW_COMMENT', {
+          await context.pubsub.publish('NEW_COMMENT', {
             newComment: comment
           });
 

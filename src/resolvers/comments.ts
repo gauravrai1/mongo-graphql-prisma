@@ -122,6 +122,8 @@ export const commentsResolvers = {
             newComment: comment
         });
 
+        return comment
+
         } else {
 
           // Creating comment
@@ -141,6 +143,8 @@ export const commentsResolvers = {
           context.pubsub.publish('NEW_COMMENT', {
             newComment: comment
           });
+
+          return comment
 
         }
       },
